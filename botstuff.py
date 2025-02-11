@@ -136,13 +136,13 @@ def get_arts(input):
 
 def allcards():
     '''Used to nab a random card'''
-    sheet = client.open_by_url(SHEET_URL).get_worksheet(3)  # Index 1 = second tab
+    sheet = client.open_by_url(SHEET_URL).get_worksheet(3)  
     try:
         data = sheet.get_all_values()
         choices=[]   # Get all sheet values
         for row in data:  # Loop through each row
             if row[1]=="":  #stop counting once we are out of cards
-                break       #yes theres a better way dont worry
+                break       #yes theres a better way dont worry i am just kinda dumb?
             choices.append(row[1])
         choices = [x for x in choices if x.strip()]     #strip blanks
        #choices = ["pika","mewtwo","charizard","alexa","nibleton","testttttt","moltres","zard x and y"]
@@ -153,12 +153,13 @@ def allcards():
         return None
 
 async def card_autocomplete(interaction: discord.Interaction, current: str) -> List[app_commands.Choice[str]]:
-    '''mmmm card but a slash command'''
+    '''This allows us to have a bi list of cards in the drop down'''
     choices = allcards()
-    choices = [app_commands.Choice(name=choice, value=choice) for choice in choices if current.lower() in choice.lower()][:24]
+    choices = [app_commands.Choice(name=choice, value=choice) for choice in choices if current.lower() in choice.lower()][:24] #slice into many 24 length arrays
     return choices
 
 def randomcard():
+    '''random card im not even gonna explain this one'''
     sheet = client.open_by_url(SHEET_URL).get_worksheet(1)
     try:
         data = sheet.get_all_values()
@@ -194,6 +195,7 @@ async def on_ready():
 
 @bot.command(name="sync")
 @commands.is_owner()
+'''syncs all my slash commands with diiscord's, only i can use it'''
 async def syncing(ctx):
 
     print(f"hi im here lets go")
@@ -204,6 +206,7 @@ async def syncing(ctx):
         await ctx.send("wow i botched it {e}")
 
 @bot.tree.command(name="testtttttt")
+'''I WANT BUTTONS TO WORK PLEEEASE'''
 async def hello(interaction: discord.Interaction):
     
     view = discord.ui.View()
@@ -222,40 +225,10 @@ async def on_message(message):
     print(f"Received message: {message.content}")  # Debug: Logs all messages the bot sees
     await bot.process_commands(message)  # Ensures bot processes commands
 
-@bot.command(name="pack")
-async def stats(ctx, *lmao):
-    """Fetches Wins, Losses, WPG, Win %, WPG+, Win Rate+ from Google Sheets."""
-   
 
-    card=(" ".join(lmao))
-    user_stats = get_user_stats(card)
-    card=card.title
-    if user_stats:
-        pack, rarity = user_stats
-
-        # Create a Discord embed
-        embed = discord.Embed(
-            title=f"Pack stats for {card}",
-            color=discord.Color.orange()
-        )
-        #embed.set_thumbnail(url=member.avatar.url)  # Set user avatar as thumbnail
-        
-        # Add fields for stats
-        embed.add_field(name="Pack", value=f"{pack}", inline=True)
-        embed.add_field(name="Rarity", value=f"{rarity}", inline=True)
-        #embed.add_field(name="WPG", value=f"📊 {wpg}", inline=True)
-        #embed.add_field(name="Win %", value=f"📈 {win_rate}", inline=True)
-        #embed.add_field(name="WPG+", value=f"🔥 {wpg_plus}", inline=True)
-        #embed.add_field(name="Win Rate+", value=f"🚀 {win_rate_plus}", inline=True)
-
-        # Send the embed
-        await ctx.send(embed=embed)
-
-    else:
-        await ctx.send(f"case sensitve")
 @bot.command(name="card")
 async def stats(ctx, *lmao):
-    """Fetches Wins, Losses, WPG, Win %, WPG+, Win Rate+ from Google Sheets."""
+    """Get Card stats!"""
    
 
     card=(" ".join(lmao))
@@ -267,19 +240,16 @@ async def stats(ctx, *lmao):
 
         # Create a Discord embed
         
-        #if validators.url(art):
-        #  print('valid')
-        #else:
-        #  print('booo')
         if test:
+          '''Trainers have a different embed than pokemon'''
           embed = discord.Embed(
             title=f"Card Stats for {card}",
-            color=discord.Color.blue()
+            color=discord.Color.white()
           )
-          embed.set_thumbnail(url=art)  # Set user avatar as thumbnail
+          embed.set_thumbnail(url=art)  # Set card art as thumbnail
           embed.set_author(name="WooperBot",url="https://x.com/radlup",icon_url=bot.user.avatar.url)
 
-          # Add fields for stats
+          # Add fields
           embed.add_field(name="Category", value=f"{category}", inline=True)
           embed.add_field(name="Effect", value=f"{effect}", inline=False)
 
@@ -292,9 +262,9 @@ async def stats(ctx, *lmao):
             title=f"Card Stats for {card}",
             color=discord.Color.red()
           )
-          embed.set_thumbnail(url=art)  # Set user avatar as thumbnail
+          embed.set_thumbnail(url=art)  # Set card art as thumbnail
           embed.set_author(name="WooperBot",url="https://x.com/radlup",icon_url=bot.user.avatar.url)
-          # Add fields for stats
+          # Add fields
           embed.add_field(name="Type", value=f"{typist}", inline=True)
           embed.add_field(name="HP", value=f"{hp}", inline=True)
           embed.add_field(name="Stage", value=f"{stage}", inline=True)
@@ -317,6 +287,7 @@ async def stats(ctx, *lmao):
 
 @bot.tree.command(name="card",description="Info about a PTCGP card!")
 @app_commands.autocomplete(card=card_autocomplete)
+'''?card but now its a slash command'''
 async def cardian(interaction: discord.Interaction, card: str):
     card_stats = get_card_stats(card)
     card=str.title(card)
@@ -379,7 +350,7 @@ async def cardian(interaction: discord.Interaction, card: str):
 
 @bot.command(name="arts")
 async def stats(ctx, *lmao):       
-
+'''get all arts for a given card'''
     card=(" ".join(lmao))
     arties = get_arts(card)
     card=str.title(card)
@@ -395,7 +366,7 @@ async def stats(ctx, *lmao):
         print(f"hi {art1}")
         react = await ctx.send(art1)
 
-        msg = react.id    
+        msg = react.id    #add reactions so the user can click on em
         left = "⬅️"
         right = "➡️"
         
@@ -410,8 +381,10 @@ async def stats(ctx, *lmao):
         while True:
             try:
                 reaction, user = await bot.wait_for("reaction_add", timeout=20.0, check=check)
+                #check for reactions
 
                 if str(reaction.emoji) == left:
+                    #move left in the array, loop to the right end if you are at 0
                     x = x-1
                     if x == -1:
                         x = l-1
@@ -422,6 +395,7 @@ async def stats(ctx, *lmao):
 
 
                 if str(reaction.emoji) == right:
+                    #move right in the array, loop back to start
                     x=x+1
                     if x == l:
                         x = 0
@@ -436,6 +410,7 @@ async def stats(ctx, *lmao):
  
 @bot.tree.command(name="arts",description="All arts for a card! This is extra handy if a pokemon has multiple cards (Ex. Magneton/Eevee)")
 @app_commands.autocomplete(card=card_autocomplete)
+'''Arts but a slash command; not working'''
 async def cardian(interaction: discord.Interaction, card: str):        
     arties = get_arts(card)
     card=str.title(card)
@@ -492,21 +467,26 @@ async def cardian(interaction: discord.Interaction, card: str):
 
 
 @bot.command(name="winter")
+'''hate that guy'''
 async def stats(ctx):       
     await ctx.send("hate that guy")
 
 @bot.command(name="misty")
 async def stats(ctx, member: discord.Member = None):
 
+    '''flip flip flip!!!'''
+
     member = ctx.author
 
     j = random.randint(1,11)
+    #pick a random coin
 
     cont = True
     
     x=0
     while cont:
         flip = random.choice([0,1])
+        #50/50 flip
         if flip == 1:
             if j == 1:
                 await ctx.send(file=discord.File('heads-blast.png'))
@@ -536,7 +516,7 @@ async def stats(ctx, member: discord.Member = None):
         else:
             await ctx.send(file=discord.File('tails.png'))
             cont = False
-        time.sleep(1.5)
+        time.sleep(1.5) #suspense
     if x == 0:
         await ctx.send(f"**{member.display_name}** flipped **0 heads**..... Maybe switch to Darkrai today champ.")
     elif x == 1:
@@ -546,6 +526,7 @@ async def stats(ctx, member: discord.Member = None):
 
 @bot.tree.command(name="misty")
 async def hello(interaction: discord.Interaction):
+    '''misty but slash'''
     member = interaction.user
 
     j = random.randint(1,11)
@@ -620,9 +601,9 @@ async def hello(interaction: discord.Interaction):
             x+=1
         else:
             if x==0:
-                await interaction.channel.send(file=discord.File('tails.png'))
-            else:
                 await interaction.response.send_message(file=discord.File('tails.png'))
+            else:
+                await interaction.channel.send(file=discord.File('tails.png'))
             cont = False
         time.sleep(1.5)
     if x == 0:
@@ -634,7 +615,7 @@ async def hello(interaction: discord.Interaction):
 
 @bot.command(name="commands")
 async def stats(ctx, *lmao):
-
+    '''my commands'''
     embed = discord.Embed(
         title=f"Here are all my commands!",
         color=discord.Color.teal()
@@ -655,7 +636,7 @@ async def stats(ctx, *lmao):
 
 @bot.command(name="about")
 async def stats(ctx, *lmao):
-    
+    '''about'''
     embed = discord.Embed(
         title=f"WooperBot Info",
         color=discord.Color.teal()
@@ -716,6 +697,7 @@ async def stats(ctx, *lmao):
     await ctx.send(f"[Click here](https://discord.gg/TgytjBRevv) to join the support server!")
 
 @bot .command("faint")
+'''It was Super Effective! Wooper has fainted :()'''
 @commands.is_owner()
 async def shutdown(ctx):
     exit()
