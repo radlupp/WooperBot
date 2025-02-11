@@ -135,16 +135,16 @@ def get_arts(input):
         return None
 
 def allcards():
-    ''''''
+    '''Used to nab a random card'''
     sheet = client.open_by_url(SHEET_URL).get_worksheet(3)  # Index 1 = second tab
     try:
         data = sheet.get_all_values()
         choices=[]   # Get all sheet values
         for row in data:  # Loop through each row
-            if row[1]=="":
-                break
+            if row[1]=="":  #stop counting once we are out of cards
+                break       #yes theres a better way dont worry
             choices.append(row[1])
-        choices = [x for x in choices if x.strip()]
+        choices = [x for x in choices if x.strip()]     #strip blanks
        #choices = ["pika","mewtwo","charizard","alexa","nibleton","testttttt","moltres","zard x and y"]
                 
         return choices
@@ -153,6 +153,7 @@ def allcards():
         return None
 
 async def card_autocomplete(interaction: discord.Interaction, current: str) -> List[app_commands.Choice[str]]:
+    '''mmmm card but a slash command'''
     choices = allcards()
     choices = [app_commands.Choice(name=choice, value=choice) for choice in choices if current.lower() in choice.lower()][:24]
     return choices
