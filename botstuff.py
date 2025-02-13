@@ -14,6 +14,9 @@ from discord import Interaction
 from discord import interactions
 from oauth2client.service_account import ServiceAccountCredentials
 
+"""WooperBot Version 1.9"""
+
+
 # Enable necessary intents
 intents = discord.Intents.default()
 intents.message_content = True  # REQUIRED for reading messages
@@ -332,7 +335,7 @@ async def stats(ctx, *lmao):
           await ctx.send(embed=embed)
 
     else:
-        await ctx.send(f"I couldnt find that card, <:sadwoop:1335481337678790758> maybe check your spelling")
+        await ctx.send(f"I couldnt find that card, <:sadwoop:1339496999258558464> maybe check your spelling")
 
 
 
@@ -408,7 +411,7 @@ async def cardian(interaction: discord.Interaction, card: str):
           await interaction.response.send_message(embed=embed)
 
     else:
-        await interaction.response.send_message(f"I couldnt find that card, <:sadwoop:1335481337678790758> maybe check your spelling")
+        await interaction.response.send_message(f"I couldnt find that card, <:sadwoop:1339496999258558464> maybe check your spelling")
 
 
 
@@ -471,7 +474,7 @@ async def stats(ctx, *lmao):
                 return
 
     else:
-        await ctx.send("I couldnt find that card <:sadwoop:1335481337678790758>")
+        await ctx.send("I couldnt find that card <:sadwoop:1339496999258558464>")
  
 @bot.tree.command(name="arts",description="All arts for a card! This is extra handy if a pokemon has multiple cards (Ex. Magneton/Eevee)")
 @app_commands.autocomplete(card=card_autocomplete)
@@ -487,14 +490,14 @@ async def cardian(interaction: discord.Interaction, card: str):
         l = len(j)
         x=0
         view=LeftRight(j)
-        await interaction.response.send_message(f"Viewing {l} Card Arts for {card}")
+        await interaction.response.send_message(f"Viewing **{l}** card arts for **{card}**")
         message = await interaction.channel.send(j[0], view=view)
         view.message=message
         await view.wait()
       
 
     else:
-        await ctx.send("I couldnt find that card <:sadwoop:1335481337678790758>")    
+        await interaction.channel.send("I couldnt find that card <:sadwoop:1339496999258558464>")    
 
 
 @bot.command(name="winter")
