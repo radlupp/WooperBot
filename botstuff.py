@@ -9,7 +9,9 @@ import json
 from typing import List
 from discord.ext import commands
 from discord import app_commands
+from discord import Color as c
 from discord import Interaction
+from discord import interactions
 from oauth2client.service_account import ServiceAccountCredentials
 
 # Enable necessary intents
@@ -39,36 +41,8 @@ creds = ServiceAccountCredentials.from_json_keyfile_name(CREDENTIALS_FILE, scope
 client = gspread.authorize(creds)
 
 # sheet var will be used to access the sheet
-sheet = client.open_by_url(SHEET_URL).get_worksheet(0)  # 0 is workbook index
+sheet = client.open_by_url(SHEET_URL).get_worksheet(3)  # 0 is workbook index
 
-#this is testing to get buttons to work
-class artview(discord.ui.View):
-    def __init__(self, pages):
-        super().__init__()
-        self.page = 0
-        self.pages = pages
-
-        self.add_item(Button(label="<", style=discord.ButtonStyle.green, custom_id="prev"))
-        self.add_item(Button(label=">", style=discord.ButtonStyle.green, custom_id="next"))
-
-    @discord.ui.button(custom_id="prev")
-    async def prev_button(self, button: discord.ui.Button, interaction: discord.Interaction):
-        if self.page > 0:
-            self.page -= 1
-            await interaction.response.edit_message(content=self.pages[self.page])
-
-    @discord.ui.button(custom_id="next")
-    async def next_button(self, button: discord.ui.Button, interaction: discord.Interaction):
-        if self.page < len(self.pages) - 1:
-            self.page += 1
-            await interaction.response.edit_message(content=self.pages[self.page])
-
-
-#this is also button testing
-@bot.command()
-async def button(ctx):
-    pages = ["page1","page2","page3","page4"]
-    await ctx.send(pages[0], view=PaginationView(pages))
 
 
 
@@ -76,6 +50,7 @@ async def button(ctx):
 def get_card_stats(input):
     """Fetches user stats from Google Sheets by looking up the Discord ID in Column C."""
     sheet = client.open_by_url(SHEET_URL).get_worksheet(3)  
+    print(input)
     try:
         data = sheet.get_all_values()  # Get all sheet values
         for row in data:  # Loop through each row
@@ -89,6 +64,7 @@ def get_card_stats(input):
                   hp = 0  
                   stage = 0  
                   attack = 0  
+                  attack_eff = 0
                   weak = 0  
                   retreat = 0
                   ability = 0
@@ -114,7 +90,7 @@ def get_card_stats(input):
         return None
 
 def get_arts(input):
-    '''This gets the arts of a card'''
+    """This gets the arts of a card"""
     sheet = client.open_by_url(SHEET_URL).get_worksheet(3)  
     try:
         data = sheet.get_all_values()  # Get all sheet values
@@ -135,7 +111,7 @@ def get_arts(input):
         return None
 
 def allcards():
-    '''Used to nab a random card'''
+    """Used to nab a random card"""
     sheet = client.open_by_url(SHEET_URL).get_worksheet(3)  
     try:
         data = sheet.get_all_values()
@@ -152,14 +128,22 @@ def allcards():
         print(f"❌ Error accessing Google Sheets: {e}")
         return None
 
+
+def randdeck():
+    sheet=client.open_by_url(SHEET_URL).get_worksheet(3) 
+    sheet2 = client.open_by_url(SHEET_URL).get_worksheet(3) 
+    #try:
+     #   data = sheet.get_values()
+    
+
 async def card_autocomplete(interaction: discord.Interaction, current: str) -> List[app_commands.Choice[str]]:
-    '''This allows us to have a bi list of cards in the drop down'''
+    """This allows us to have a bi list of cards in the drop down"""
     choices = allcards()
     choices = [app_commands.Choice(name=choice, value=choice) for choice in choices if current.lower() in choice.lower()][:24] #slice into many 24 length arrays
     return choices
 
 def randomcard():
-    '''random card im not even gonna explain this one'''
+    """random card im not even gonna explain this one"""
     sheet = client.open_by_url(SHEET_URL).get_worksheet(1)
     try:
         data = sheet.get_all_values()
@@ -193,11 +177,10 @@ async def on_ready():
            # await channel.send("Yooo im online!")
 
 
-@bot.command(name="sync")
+@bot.command(name="syync")
 @commands.is_owner()
-'''syncs all my slash commands with diiscord's, only i can use it'''
 async def syncing(ctx):
-
+    """syncs all my slash commands with diiscord's, only i can use it"""
     print(f"hi im here lets go")
     try:
         synced = await bot.tree.sync()
@@ -205,19 +188,54 @@ async def syncing(ctx):
     except Exception as e:
         await ctx.send("wow i botched it {e}")
 
-@bot.tree.command(name="testtttttt")
-'''I WANT BUTTONS TO WORK PLEEEASE'''
-async def hello(interaction: discord.Interaction):
-    
-    view = discord.ui.View()
-    style = discord.ButtonStyle.gray
-    item = discord.ui.Button(style=style, label="I know what im doing")
-    async def function_name(self, int: discord.Interaction):
-        await int.response.send_message("button clicked")
-    view.add_item(item=item)
-    await interaction.response.send_message(f"Hey {interaction.user.mention} wassssup", ephemeral=True, view=view)
-    async def butt(self, interaction):
-        await interaction.channel.send("wow we are goin to the left")
+
+class LeftRight(discord.ui.View):
+    def __init__(self,pages):
+            super().__init__(timeout=15)
+            self.page=0
+            self.pages=pages
+    foo : bool = None
+
+    async def count_press(self):
+        for item in self.children:
+            item.disabled = True
+    async def on_timeout(self) -> None:
+        await self.count_press()
+    @discord.ui.button(label="Previous",
+                       style=discord.ButtonStyle.blurple, emoji="⬅️")
+    async def left(self, interaction: discord.Interaction, button: discord.ui.Button,):
+        if self.page > 0:
+            self.page -= 1
+        else:
+            self.page = len(self.pages) - 1
+        await interaction.response.edit_message(content=self.pages[self.page])
+    @discord.ui.button(label="Next",
+                       style=discord.ButtonStyle.blurple, emoji="➡️")
+    async def right(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.page < len(self.pages) - 1:
+            self.page += 1
+        else:
+            self.page = 0
+        await interaction.response.edit_message(content=self.pages[self.page])
+
+"""
+@bot.tree.command(name="test22222")
+async def button(interaction=discord.Interaction):
+    pages = ["page", "2", "3", "4"]
+    view=LeftRight(pages)
+    await interaction.response.send_message("Viewing x Card Arts for:")
+    message = await interaction.channel.send(pages[0], view=view)
+    view.message=message
+    await view.wait()
+
+    if view.foo is None:
+        print("Timeout")
+    elif view.foo is True:
+        print("pressed left")
+    else:
+        print("pressed right")
+"""
+
     
 
 @bot.event
@@ -225,12 +243,23 @@ async def on_message(message):
     print(f"Received message: {message.content}")  # Debug: Logs all messages the bot sees
     await bot.process_commands(message)  # Ensures bot processes commands
 
+g="<:grass:1334617925461741799>"
+r="<:fire:1334618516904476702>"
+w="<:water:1334618527209885747>"
+l="<:lightning:1334618537183936563>"
+d="<:darkness:1334618567370604635>"
+p="<:psychic:1334618547262849045>"
+f="<:fighting:1334618556985376809>"
+m="<:metal:1334618578175131708>"
+dr="<:dragon:1334620515108655104>"
+c="<:colorless:1334620662240776212>"
+
 
 @bot.command(name="card")
 async def stats(ctx, *lmao):
     """Get Card stats!"""
    
-
+    
     card=(" ".join(lmao))
     card_stats = get_card_stats(card)
     card=str.title(card)
@@ -238,13 +267,33 @@ async def stats(ctx, *lmao):
     if card_stats:
         typist, hp, stage, attack, attack_eff, weak, retreat, ability, art, category, effect, test = card_stats
 
+        """different colors for types"""
+        
+        if typist == g:
+            color=discord.Color.green()
+        elif typist == r:
+            color=discord.Color.red()
+        elif typist == w:
+            color=discord.Color.blue()
+        elif typist == l:
+            color=discord.Color.gold()
+        elif typist == d:
+            color=discord.Color.dark_purple()
+        elif typist == p:
+            color=discord.Color.magenta()
+        elif typist == f:
+            color=discord.Color.dark_orange()
+        elif typist == m:
+            color=discord.Color.dark_grey()
+        elif typist == dr:
+            color=discord.Color.dark_gold()
         # Create a Discord embed
         
         if test:
-          '''Trainers have a different embed than pokemon'''
+          """Trainers have a different embed than pokemon"""
           embed = discord.Embed(
             title=f"Card Stats for {card}",
-            color=discord.Color.white()
+            color=discord.Color.lighter_gray()
           )
           embed.set_thumbnail(url=art)  # Set card art as thumbnail
           embed.set_author(name="WooperBot",url="https://x.com/radlup",icon_url=bot.user.avatar.url)
@@ -260,7 +309,7 @@ async def stats(ctx, *lmao):
         else:
           embed = discord.Embed(
             title=f"Card Stats for {card}",
-            color=discord.Color.red()
+            color=color
           )
           embed.set_thumbnail(url=art)  # Set card art as thumbnail
           embed.set_author(name="WooperBot",url="https://x.com/radlup",icon_url=bot.user.avatar.url)
@@ -285,22 +334,38 @@ async def stats(ctx, *lmao):
     else:
         await ctx.send(f"I couldnt find that card, <:sadwoop:1335481337678790758> maybe check your spelling")
 
+
+
 @bot.tree.command(name="card",description="Info about a PTCGP card!")
 @app_commands.autocomplete(card=card_autocomplete)
-'''?card but now its a slash command'''
 async def cardian(interaction: discord.Interaction, card: str):
+    """?card but now its a slash command"""
     card_stats = get_card_stats(card)
     card=str.title(card)
-
     if card_stats:
         typist, hp, stage, attack, attack_eff, weak, retreat, ability, art, category, effect, test = card_stats
 
-        # Create a Discord embed
-        
-        #if validators.url(art):
-        #  print('valid')
-        #else:
-        #  print('booo')
+        if typist == g:
+            color=discord.Color.green()
+        elif typist == r:
+            color=discord.Color.red()
+        elif typist == w:
+            color=discord.Color.blue()
+        elif typist == l:
+            color=discord.Color.gold()
+        elif typist == d:
+            color=discord.Color.dark_purple()
+        elif typist == p:
+            color=discord.Color.magenta()
+        elif typist == f:
+            color=discord.Color.dark_orange()
+        elif typist == m:
+            color=discord.Color.dark_grey()
+        elif typist == dr:
+            color=discord.Color.dark_gold()
+
+        # w=Create a Discord embed
+
         if test:
           embed = discord.Embed(
             title=f"Card Stats for {card}",
@@ -320,7 +385,7 @@ async def cardian(interaction: discord.Interaction, card: str):
         else:
           embed = discord.Embed(
             title=f"Card Stats for {card}",
-            color=discord.Color.red()
+            color=color
           )
           embed.set_thumbnail(url=art)  # Set user avatar as thumbnail
           embed.set_author(name="WooperBot",url="https://x.com/radlup",icon_url=bot.user.avatar.url)
@@ -350,7 +415,7 @@ async def cardian(interaction: discord.Interaction, card: str):
 
 @bot.command(name="arts")
 async def stats(ctx, *lmao):       
-'''get all arts for a given card'''
+    """get all arts for a given card"""
     card=(" ".join(lmao))
     arties = get_arts(card)
     card=str.title(card)
@@ -410,8 +475,8 @@ async def stats(ctx, *lmao):
  
 @bot.tree.command(name="arts",description="All arts for a card! This is extra handy if a pokemon has multiple cards (Ex. Magneton/Eevee)")
 @app_commands.autocomplete(card=card_autocomplete)
-'''Arts but a slash command; not working'''
 async def cardian(interaction: discord.Interaction, card: str):        
+    """Arts but a slash command, uses buttons"""
     arties = get_arts(card)
     card=str.title(card)
 
@@ -421,97 +486,41 @@ async def cardian(interaction: discord.Interaction, card: str):
         j = [x for x in j if x.strip()]
         l = len(j)
         x=0
-        await interaction.response.send_message(j[0],view=artview(j))
+        view=LeftRight(j)
+        await interaction.response.send_message(f"Viewing {l} Card Arts for {card}")
+        message = await interaction.channel.send(j[0], view=view)
+        view.message=message
+        await view.wait()
       
-        print(f"hi {art1}")
-        #await interaction.channel.send(j[0],view=artview(j))
-
-        #msg = react.id    
-        '''left = "⬅️"
-        right = "➡️"
-        
-        await react.add_reaction(left)    
-        await react.add_reaction(right)
-
-        def check(reaction, user):
-            return user == interaction.author and str(reaction.emoji) in [left,right]
-
-        member = interaction.author
-
-        while True:
-            try:
-                reaction, user = await bot.wait_for("reaction_add", timeout=20.0, check=check)
-
-                if str(reaction.emoji) == left:
-                    x = x-1
-                    if x == -1:
-                        x = l-1
-                   
-                    await reaction.message.edit(content=j[x])
-                    await react.add_reaction(left)    
-                    await react.add_reaction(right)
-
-
-                if str(reaction.emoji) == right:
-                    x=x+1
-                    if x == l:
-                        x = 0
-                    await reaction.message.edit(content=j[x])
-                    await react.add_reaction(left)    
-                    await react.add_reaction(right)
-            except asyncio.TimeoutError:
-                return'''
 
     else:
         await ctx.send("I couldnt find that card <:sadwoop:1335481337678790758>")    
 
 
 @bot.command(name="winter")
-'''hate that guy'''
-async def stats(ctx):       
+async def stats(ctx):
+    """hate that guy"""       
     await ctx.send("hate that guy")
 
 @bot.command(name="misty")
 async def stats(ctx, member: discord.Member = None):
 
-    '''flip flip flip!!!'''
+    """flip flip flip!!!"""
 
     member = ctx.author
+    coins=["heads-blast.png","heads-cynthia.png","heads-eevee.png","heads-erika.png","heads-garde.png","heads-lux.png","heads-m2.png","heads-meow.png","heads-mew.png",
+           "heads-pika.png","heads-zard.png","heads-darkrai.png"]
+    j = random.randint(0,len(coins)-1)
 
-    j = random.randint(1,11)
-    #pick a random coin
 
     cont = True
-    
+
     x=0
     while cont:
         flip = random.choice([0,1])
         #50/50 flip
         if flip == 1:
-            if j == 1:
-                await ctx.send(file=discord.File('heads-blast.png'))
-            elif j== 2:
-                await ctx.send(file=discord.File('heads-cynthia.png'))
-            elif j== 3:
-                await ctx.send(file=discord.File('heads-eevee.png'))
-            elif j== 4:
-                await ctx.send(file=discord.File('heads-erika.png'))
-            elif j== 5:
-                await ctx.send(file=discord.File('heads-garde.png'))
-            elif j== 6:
-                await ctx.send(file=discord.File('heads-lux.png'))
-            elif j== 7:
-                await ctx.send(file=discord.File('heads-m2.png'))
-            elif j== 8:
-                await ctx.send(file=discord.File('heads-meow.png'))
-            elif j== 9:
-                await ctx.send(file=discord.File('heads-mew.png'))
-            elif j== 10:
-                await ctx.send(file=discord.File('heads-pika.png'))
-            elif j== 11:
-                await ctx.send(file=discord.File('heads-zard.png'))
-            #elif j== 12:
-            #    await ctx.send(file=discord.File('heads-dark.png'))
+            await ctx.send(file=discord.File(coins[j]))
             x+=1
         else:
             await ctx.send(file=discord.File('tails.png'))
@@ -526,10 +535,11 @@ async def stats(ctx, member: discord.Member = None):
 
 @bot.tree.command(name="misty")
 async def hello(interaction: discord.Interaction):
-    '''misty but slash'''
+    """misty but slash"""
     member = interaction.user
-
-    j = random.randint(1,11)
+    coins=["heads-blast.png","heads-cynthia.png","heads-eevee.png","heads-erika.png","heads-garde.png","heads-lux.png","heads-m2.png","heads-meow.png","heads-mew.png",
+           "heads-pika.png","heads-zard.png","heads-darkrai.png"]
+    j = random.randint(0,len(coins)-1)
 
     cont = True
     
@@ -537,67 +547,10 @@ async def hello(interaction: discord.Interaction):
     while cont:
         flip = random.choice([0,1])
         if flip == 1:
-            if j == 1:
-                if x==0:
-                    await interaction.response.send_message(file=discord.File('heads-blast.png'))
-                else:
-                    await interaction.channel.send(file=discord.File('heads-blast.png'))
-            elif j== 2:
-                if x==0:
-                    await interaction.response.send_message(file=discord.File('heads-cynthia.png'))
-                else:
-                    await interaction.channel.send(file=discord.File('heads-cynthia.png'))
-            elif j== 3:
-                if x==0:
-                    await interaction.response.send_message(file=discord.File('heads-eevee.png'))
-                else:
-                    await interaction.channel.send(file=discord.File('heads-eevee.png'))
-            elif j== 4:
-                if x==0:
-                    await interaction.response.send_message(file=discord.File('heads-erika.png'))
-                else:
-                    await interaction.channel.send(file=discord.File('heads-erika.png'))
-            elif j== 5:
-                if x==0:
-                    await interaction.response.send_message(file=discord.File('heads-garde.png'))
-                else:
-                    await interaction.channel.send(file=discord.File('heads-garde.png'))
-            elif j== 6:
-                if x==0:
-                    await interaction.response.send_message(file=discord.File('heads-lux.png'))
-                else:
-                    await interaction.channel.send(file=discord.File('heads-lux.png'))
-            elif j== 7:
-                if x==0:
-                    await interaction.response.send_message(file=discord.File('heads-m2.png'))
-                else:
-                    await interaction.channel.send(file=discord.File('heads-m2.png'))
-            elif j== 8:
-                if x==0:
-                    await interaction.response.send_message(file=discord.File('heads-meow.png'))
-                else:
-                    await interaction.channel.send(file=discord.File('heads-meow.png'))
-            elif j== 9:
-                if x==0:
-                    await interaction.response.send_message(file=discord.File('heads-mew.png'))
-                else:
-                    await interaction.channel.send(file=discord.File('heads-mew.png'))
-            elif j== 10:
-                if x==0:
-                    await interaction.response.send_message(file=discord.File('heads-pika.png'))
-                else:
-                    await interaction.channel.send(file=discord.File('heads-pika.png'))
-            elif j== 11:
-                if x==0:
-                    await interaction.response.send_message(file=discord.File('heads-zard.png'))
-                else:
-                    await interaction.channel.send(file=discord.File('heads-zard.png'))
-            #elif j== 12:
-            #    if x==0:
-            #        await interaction.response.send_message(file=discord.File('heads-dark.png'))
-            #    else:
-            #        await interaction.channel.send(file=discord.File('heads-dark.png'))
-
+            if x==0:
+                await interaction.response.send_message(file=discord.File(coins[j]))
+            else:
+                await interaction.channel.send(file=discord.File(coins[j]))
             x+=1
         else:
             if x==0:
@@ -615,7 +568,7 @@ async def hello(interaction: discord.Interaction):
 
 @bot.command(name="commands")
 async def stats(ctx, *lmao):
-    '''my commands'''
+    """my commands"""
     embed = discord.Embed(
         title=f"Here are all my commands!",
         color=discord.Color.teal()
@@ -634,9 +587,29 @@ async def stats(ctx, *lmao):
 
     await ctx.send(embed=embed)
 
+@bot.tree.command(name="commands")
+async def hello(interaction: discord.Interaction):
+    embed = discord.Embed(
+        title=f"Here are all my commands!",
+        color=discord.Color.teal()
+    )
+    embed.set_author(name="WooperBot",url="https://x.com/radlup",icon_url=bot.user.avatar.url)
+          # Add fields for stats
+    embed.add_field(name="?Slash Commands", value=f"All the commands also work with slash commands!", inline=False)
+    embed.add_field(name="?about/?wooper", value=f"Basic info about the bot and how to add me!", inline=False)
+    embed.add_field(name="?commands", value=f"You're lookin at it", inline=False)
+    embed.add_field(name="?card <Card Name>", value=f"Info about a PTCGP Card!", inline=False)
+    embed.add_field(name="?arts <Card Name>", value=f"All arts for a given card, including those with multiple variants", inline=False)
+    embed.add_field(name="?misty", value=f"Practice flipping your Mistys before battle!", inline=False)
+    embed.add_field(name="?randcard/?random", value=f"Get a random Card!", inline=False)
+    embed.add_field(name="?help", value=f"Link to the support server", inline=False)
+    embed.set_footer(text="Thank you for using WooperBot!")
+
+    await interaction.response.send_message(embed=embed)
+
 @bot.command(name="about")
 async def stats(ctx, *lmao):
-    '''about'''
+    """about"""
     embed = discord.Embed(
         title=f"WooperBot Info",
         color=discord.Color.teal()
@@ -648,6 +621,21 @@ async def stats(ctx, *lmao):
     embed.add_field(name="How do I add you to my server?", value=f"Click this link to add me to your server! [Add Me!](https://discord.com/oauth2/authorize?client_id=1306086328601153547&permissions=689342597184&integration_type=0&scope=bot)", inline=False)
 
     await ctx.send(embed=embed)
+
+@bot.tree.command(name="about")
+async def hello(interaction: discord.Interaction):
+    embed = discord.Embed(
+        title=f"WooperBot Info",
+        color=discord.Color.teal()
+    )
+    embed.set_author(name="WooperBot",url="https://x.com/radlup",icon_url=bot.user.avatar.url)
+          # Add fields for stats
+    embed.add_field(name="What do you do?", value=f"I can give you info and arts for all PTCG cards! I also flip coins sometimes. Use ?commands to see more!", inline=False)
+    embed.add_field(name="Who made you?", value=f"@radlup on discord and twitter, feel free to message him with any questions/suggestions or bug reports!", inline=False)
+    embed.add_field(name="How do I add you to my server?", value=f"Click this link to add me to your server! [Add Me!](https://discord.com/oauth2/authorize?client_id=1306086328601153547&permissions=689342597184&integration_type=0&scope=bot)", inline=False)
+
+    await interaction.response.send_message(embed=embed)
+
 
 @bot.command(name="wooper")
 async def stats(ctx, *lmao):
@@ -665,7 +653,20 @@ async def stats(ctx, *lmao):
 
     await ctx.send(embed=embed)
 
+@bot.tree.command(name="wooper")
+async def hello(interaction: discord.Interaction):
+    await interaction.response.send_message(f"Hey thats me!")
+    embed = discord.Embed(
+        title=f"WooperBot Info",
+        color=discord.Color.teal()
+    )
+    embed.set_author(name="WooperBot",url="https://x.com/radlup",icon_url=bot.user.avatar.url)
+          # Add fields for stats
+    embed.add_field(name="What do you do?", value=f"I can give you info and arts for all PTCG cards! I also flip coins sometimes. Use ?commands to see more!", inline=False)
+    embed.add_field(name="Who made you?", value=f"@radlup on discord and twitter, feel free to message him with any questions/suggestions or bug reports!", inline=False)
+    embed.add_field(name="How do I add you to my server?", value=f"Click this link to add me to your server! [Add Me!](https://discord.com/oauth2/authorize?client_id=1306086328601153547&permissions=689342597184&integration_type=0&scope=bot)", inline=False)
 
+    await interaction.channel.send(embed=embed)
 
 @bot.command(name="random")
 async def stats(ctx, *lmao):
@@ -691,15 +692,36 @@ async def stats(ctx, *lmao):
     else:
         await ctx.send("weird error happened :(")
 
+@bot.tree.command(name="randomcard")
+async def hello(interaction: discord.Interaction):
+    await interaction.response.send_message(f"Here's you're random card! Now do it 19 more times for a very fun and competitive deck.")
+    card = randomcard()
+    if card:
+        final = card
+        await interaction.channel.send(final)
+    else:
+        await interaction.response.send_message("weird error happened :(")
+
+
+@bot.tree.command(name="randomdeck")
+async def hello(interaction: discord.Interaction):
+    await interaction.response.send_message(f"Here's you're random deck, trust me easy 10 game winstreak.")
+
+    
+
 @bot.command(name="help")
 async def stats(ctx, *lmao):
     
     await ctx.send(f"[Click here](https://discord.gg/TgytjBRevv) to join the support server!")
 
-@bot .command("faint")
-'''It was Super Effective! Wooper has fainted :()'''
+@bot.tree.command(name="help")
+async def hello(interaction: discord.Interaction):
+    await interaction.response.send_message(f"[Click here](https://discord.gg/TgytjBRevv) to join the support server!")
+
+@bot.command("faint")
 @commands.is_owner()
 async def shutdown(ctx):
+    """It was Super Effective! Wooper has fainted :()"""
     exit()
 
 bot.run(token)
