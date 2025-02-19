@@ -193,8 +193,9 @@ async def syncing(ctx):
 
 
 class LeftRight(discord.ui.View):
-    def __init__(self,pages):
+    def __init__(self,pages,author):
             super().__init__(timeout=15)
+            self.author = author
             self.page=0
             self.pages=pages
     foo : bool = None
@@ -212,6 +213,9 @@ class LeftRight(discord.ui.View):
         else:
             self.page = len(self.pages) - 1
         await interaction.response.edit_message(content=self.pages[self.page])
+    async def interaction_check(self, interaction: discord.Interaction):
+        await interaction.response.send_message("Not your button buddy <:sadwoop:1339496999258558464>",ephemeral = True)
+        return interaction.user.id == self.author.id
     @discord.ui.button(label="Next",
                        style=discord.ButtonStyle.blurple, emoji="➡️")
     async def right(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -220,14 +224,18 @@ class LeftRight(discord.ui.View):
         else:
             self.page = 0
         await interaction.response.edit_message(content=self.pages[self.page])
+    async def interaction_check(self, interaction: discord.Interaction):
+        await interaction.response.send_message("Not your button buddy <:sadwoop:1339496999258558464>",ephemeral = True)
+        return interaction.user.id == self.author.id
 
-"""
-@bot.tree.command(name="test22222")
-async def button(interaction=discord.Interaction):
+
+@bot.command(name="asd")
+async def button(ctx):
     pages = ["page", "2", "3", "4"]
-    view=LeftRight(pages)
-    await interaction.response.send_message("Viewing x Card Arts for:")
-    message = await interaction.channel.send(pages[0], view=view)
+    auth = ctx.author
+    view=LeftRight(pages,auth)
+    await ctx.send("Viewing x Card Arts for:")
+    message = await ctx.send(pages[0], view=view)
     view.message=message
     await view.wait()
 
@@ -237,7 +245,6 @@ async def button(interaction=discord.Interaction):
         print("pressed left")
     else:
         print("pressed right")
-"""
 
     
 
@@ -489,7 +496,8 @@ async def cardian(interaction: discord.Interaction, card: str):
         j = [x for x in j if x.strip()]
         l = len(j)
         x=0
-        view=LeftRight(j)
+        auth = interaction.user.id
+        view=LeftRight(j,auth)
         await interaction.response.send_message(f"Viewing **{l}** card arts for **{card}**")
         message = await interaction.channel.send(j[0], view=view)
         view.message=message
