@@ -129,7 +129,7 @@ def allcards():
         for row in data:  # Loop through each row
             if row[1]=="":  #stop counting once we are out of cards
                 break       #yes theres a better way dont worry i am just kinda dumb?
-            choices.append(row[1])
+            choices.append(row[2])
         choices = [x for x in choices if x.strip()]     #strip blanks
        #choices = ["pika","mewtwo","charizard","alexa","nibleton","testttttt","moltres","zard x and y"]
                 
