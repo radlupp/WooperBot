@@ -14,7 +14,7 @@ from discord import Interaction
 from discord import interactions
 from oauth2client.service_account import ServiceAccountCredentials
 
-"""WooperBot Version 1.9"""
+"""WooperBot Version 1.10.2"""
 
 
 # Enable necessary intents
@@ -58,7 +58,7 @@ def get_card_stats(input):
         data = sheet.get_all_values()  # Get all sheet values
         for row in data:  # Loop through each row
             if str.lower(row[2]) == str.lower(input):  # Column B, str.lower to account for case issues
-                if (row[2]) == 'Trainer':   #Different Variables if Trainer Card
+                if (row[3]) == 'Supporter' or (row[3]) == 'Item' or (row[3]) == 'Tool':   #Different Variables if Trainer Card
                   category = (row[3])  
                   effect = (row[4])         #Column 5 stores the effect etc etc
                   art = (row[13])
@@ -73,8 +73,14 @@ def get_card_stats(input):
                   weak = 0  
                   retreat = 0
                   ability = 0
+                  if (row[3]) == 'Supporter':
+                    newcolor= discord.Color.orange()
+                  elif (row[2]) == 'Tool':
+                    newcolor= discord.Color.purple()
+                  else:
+                    newcolor = discord.Color.blue()
                   
-                  return typist, hp, stage, attack, attack_eff, weak, retreat, ability, art, category, effect, test, atk2, atk2_eff
+                  return typist, hp, stage, attack, attack_eff, weak, retreat, ability, art, category, effect, test, atk2, atk2_eff, newcolor
                 else:                          #pokemon else
                     typist = str(row[3])       # i think this is self explanetory
                     hp = str(row[4])  
@@ -89,8 +95,9 @@ def get_card_stats(input):
                     art = row[13]
                     category = 0                #have to return these for trainer
                     effect = 0
+                    newcolor=0
                     test = False                #test is true if trainer, false if pokemon
-                    return typist, hp, stage, attack, attack_eff, weak, retreat, ability, art, category, effect, test, atk2, atk2_eff
+                    return typist, hp, stage, attack, attack_eff, weak, retreat, ability, art, category, effect, test, atk2, atk2_eff, newcolor
         return None  # Return None if the card isnt found
     except Exception as e:      #something blew up if this happens
         print(f"❌ Error accessing Google Sheets: {e}")
@@ -103,7 +110,6 @@ def get_arts(input):
         data = sheet.get_all_values()  # Get all sheet values
         print(len(data))
         for row in data:  # Loop through each row
-            print(row)
             if str.lower(row[2]) == str.lower(input):   #str.lower to account for case issues
                 art1=row[13]
                 art2=row[14]
@@ -122,14 +128,14 @@ def get_arts(input):
 
 def allcards():
     """Used to nab a random card"""
-    sheet = client.open_by_url(SHEET_URL).get_worksheet(3)  
+    sheet = client.open_by_url(SHEET_URL).get_worksheet(5)  
     try:
         data = sheet.get_all_values()
         choices=[]   # Get all sheet values
         for row in data:  # Loop through each row
-            if row[1]=="":  #stop counting once we are out of cards
+            if row[0]=="":  #stop counting once we are out of cards
                 break       #yes theres a better way dont worry i am just kinda dumb?
-            choices.append(row[2])
+            choices.append(row[0])
         choices = [x for x in choices if x.strip()]     #strip blanks
        #choices = ["pika","mewtwo","charizard","alexa","nibleton","testttttt","moltres","zard x and y"]
                 
@@ -157,11 +163,7 @@ def randomcard():
     sheet = client.open_by_url(SHEET_URL).get_worksheet(1)
     try:
         data = sheet.get_all_values()
-        x=0
-        for row in data:
-            if str.lower(row[0]) == str.lower(""):
-                break
-            x +=1
+        x=len(data)
         print(x)
         i = random.randint(0,x)
         j = "A" + str(i)
@@ -206,7 +208,7 @@ class LeftRight(discord.ui.View):
             self.page=0
             self.pages=pages
     foo : bool = None
-
+    
     async def count_press(self):
         for item in self.children:
             item.disabled = True
@@ -221,8 +223,9 @@ class LeftRight(discord.ui.View):
             self.page = len(self.pages) - 1
         await interaction.response.edit_message(content=self.pages[self.page])
     async def interaction_check(self, interaction: discord.Interaction):
-        await interaction.response.send_message("Not your button buddy <:sadwoop:1339496999258558464>",ephemeral = True)
-        return interaction.user.id == self.author.id
+        if interaction.user.id != self.author:
+            await interaction.response.send_message("Not your button buddy <:sadwoop:1339496999258558464>",ephemeral = True)
+        return interaction.user.id == self.author
     @discord.ui.button(label="Next",
                        style=discord.ButtonStyle.blurple, emoji="➡️")
     async def right(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -232,8 +235,9 @@ class LeftRight(discord.ui.View):
             self.page = 0
         await interaction.response.edit_message(content=self.pages[self.page])
     async def interaction_check(self, interaction: discord.Interaction):
-        await interaction.response.send_message("Not your button buddy <:sadwoop:1339496999258558464>",ephemeral = True)
-        return interaction.user.id == self.author.id
+        if interaction.user.id != self.author:
+            await interaction.response.send_message("Not your button buddy <:sadwoop:1339496999258558464>",ephemeral = True)
+        return interaction.user.id == self.author
 
 
 @bot.command(name="asd")
@@ -282,7 +286,7 @@ async def stats(ctx, *lmao):
     card=str.title(card)
 
     if card_stats:
-        typist, hp, stage, attack, attack_eff, weak, retreat, ability, art, category, effect, test, atk2, atk2_eff = card_stats
+        typist, hp, stage, attack, attack_eff, weak, retreat, ability, art, category, effect, test, atk2, atk2_eff, newcolor = card_stats
 
         """different colors for types"""
         
@@ -307,12 +311,13 @@ async def stats(ctx, *lmao):
         else:
             color=discord.Color.lighter_grey()
         # Create a Discord embed
-        
+        print(test)
+
         if test:
           """Trainers have a different embed than pokemon"""
           embed = discord.Embed(
             title=f"Card Stats for {card}",
-            color=discord.Color.lighter_gray()
+            color=newcolor
           )
           embed.set_thumbnail(url=art)  # Set card art as thumbnail
           embed.set_author(name="WooperBot",url="https://x.com/radlup",icon_url=bot.user.avatar.url)
@@ -366,7 +371,7 @@ async def cardian(interaction: discord.Interaction, card: str):
     card_stats = get_card_stats(card)
     card=str.title(card)
     if card_stats:
-        typist, hp, stage, attack, attack_eff, weak, retreat, ability, art, category, effect, test, atk2, atk2_eff = card_stats
+        typist, hp, stage, attack, attack_eff, weak, retreat, ability, art, category, effect, test, atk2, atk2_eff, newcolor = card_stats
 
         if typist == g:
             color=discord.Color.green()
@@ -394,7 +399,7 @@ async def cardian(interaction: discord.Interaction, card: str):
         if test:
           embed = discord.Embed(
             title=f"Card Stats for {card}",
-            color=discord.Color.blue()
+            color=newcolor
           )
           embed.set_thumbnail(url=art)  # Set user avatar as thumbnail
           embed.set_author(name="WooperBot",url="https://x.com/radlup",icon_url=bot.user.avatar.url)
@@ -457,7 +462,7 @@ async def stats(ctx, *lmao):
         x=0
         await ctx.send(f"**Viewing {l} card arts for {card}:**")
       
-        print(f"hi {art1}")
+        #print(f"hi {art1}")
         react = await ctx.send(art1)
 
         msg = react.id    #add reactions so the user can click on em
