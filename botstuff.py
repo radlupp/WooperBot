@@ -57,36 +57,40 @@ def get_card_stats(input):
     try:
         data = sheet.get_all_values()  # Get all sheet values
         for row in data:  # Loop through each row
-            if str.lower(row[1]) == str.lower(input):  # Column B, str.lower to account for case issues
+            if str.lower(row[2]) == str.lower(input):  # Column B, str.lower to account for case issues
                 if (row[2]) == 'Trainer':   #Different Variables if Trainer Card
-                  category = (row[4])  
-                  effect = (row[5])         #Column 5 stores the effect etc etc
-                  art = (row[7])
+                  category = (row[3])  
+                  effect = (row[4])         #Column 5 stores the effect etc etc
+                  art = (row[13])
                   test = True               #test is true if trainer, false if pokemon
                   typist = 0                #i have to return these for the pokemon so they are just 0 now
                   hp = 0  
                   stage = 0  
                   attack = 0  
                   attack_eff = 0
+                  atk2 = 0
+                  atk2_eff=0
                   weak = 0  
                   retreat = 0
                   ability = 0
                   
-                  return typist, hp, stage, attack, attack_eff, weak, retreat, ability, art, category, effect, test
+                  return typist, hp, stage, attack, attack_eff, weak, retreat, ability, art, category, effect, test, atk2, atk2_eff
                 else:                          #pokemon else
-                    typist = str(row[2])       # i think this is self explanetory
-                    hp = str(row[3])  
-                    stage = row[4]  
-                    attack = row[5]  
-                    attack_eff = row[6]  
-                    weak = row[7]  
-                    retreat = row[8]
-                    ability = row[9]
-                    art = row[10]
+                    typist = str(row[3])       # i think this is self explanetory
+                    hp = str(row[4])  
+                    stage = row[5]  
+                    attack = row[6]  
+                    attack_eff = row[7] 
+                    atk2 = row[8] 
+                    atk2_eff = row[9]
+                    weak = row[10]  
+                    retreat = row[11]
+                    ability = row[12]
+                    art = row[13]
                     category = 0                #have to return these for trainer
                     effect = 0
                     test = False                #test is true if trainer, false if pokemon
-                    return typist, hp, stage, attack, attack_eff, weak, retreat, ability, art, category, effect, test
+                    return typist, hp, stage, attack, attack_eff, weak, retreat, ability, art, category, effect, test, atk2, atk2_eff
         return None  # Return None if the card isnt found
     except Exception as e:      #something blew up if this happens
         print(f"❌ Error accessing Google Sheets: {e}")
@@ -97,15 +101,18 @@ def get_arts(input):
     sheet = client.open_by_url(SHEET_URL).get_worksheet(3)  
     try:
         data = sheet.get_all_values()  # Get all sheet values
+        print(len(data))
         for row in data:  # Loop through each row
-            if str.lower(row[1]) == str.lower(input):   #str.lower to account for case issues
-                art1=row[11]
-                art2=row[12]
-                art3=row[13]
-                art4=row[14]
-                art5=row[15]
-                art6=row[16]
-                art7=row[17]         #store up to 7 arts, no cards have more than 7. should make this an array tho
+            print(row)
+            if str.lower(row[2]) == str.lower(input):   #str.lower to account for case issues
+                art1=row[13]
+                art2=row[14]
+                art3=row[15]
+                art4=row[16]
+                art5=row[17]
+                art6=row[18]
+                art7=row[19]
+                #art8=row[20]         #store up to 7 arts, no cards have more than 7. should make this an array tho
                 
                 return art1, art2, art3, art4, art5, art6, art7
         return None         #return none if not found
@@ -275,7 +282,7 @@ async def stats(ctx, *lmao):
     card=str.title(card)
 
     if card_stats:
-        typist, hp, stage, attack, attack_eff, weak, retreat, ability, art, category, effect, test = card_stats
+        typist, hp, stage, attack, attack_eff, weak, retreat, ability, art, category, effect, test, atk2, atk2_eff = card_stats
 
         """different colors for types"""
         
@@ -297,6 +304,8 @@ async def stats(ctx, *lmao):
             color=discord.Color.dark_grey()
         elif typist == dr:
             color=discord.Color.dark_gold()
+        else:
+            color=discord.Color.lighter_grey()
         # Create a Discord embed
         
         if test:
@@ -327,11 +336,15 @@ async def stats(ctx, *lmao):
           embed.add_field(name="Type", value=f"{typist}", inline=True)
           embed.add_field(name="HP", value=f"{hp}", inline=True)
           embed.add_field(name="Stage", value=f"{stage}", inline=True)
-          embed.add_field(name="Attack", value=f"{attack}", inline=True)
+          embed.add_field(name="Attack", value=f"{attack}", inline=False)
           if attack_eff != "":
             embed.add_field(name="Attack Effect", value=f"{attack_eff}", inline=False)
-            
-          embed.add_field(name="Ability", value=f"{ability}", inline=False)
+          if atk2 != "":
+            embed.add_field(name="Second Attack", value=f"{atk2}", inline=False)
+            if atk2_eff != "":
+                embed.add_field(name= "Second Attack Effect", value=f"{atk2_eff}", inline=False)
+          if ability !="":
+            embed.add_field(name="Ability", value=f"{ability}", inline=False)
           embed.add_field(name="Weakness", value=f"{weak}", inline=True)
           embed.add_field(name="Retreat", value=f"{retreat}", inline=True)
 
@@ -353,7 +366,7 @@ async def cardian(interaction: discord.Interaction, card: str):
     card_stats = get_card_stats(card)
     card=str.title(card)
     if card_stats:
-        typist, hp, stage, attack, attack_eff, weak, retreat, ability, art, category, effect, test = card_stats
+        typist, hp, stage, attack, attack_eff, weak, retreat, ability, art, category, effect, test, atk2, atk2_eff = card_stats
 
         if typist == g:
             color=discord.Color.green()
@@ -373,6 +386,8 @@ async def cardian(interaction: discord.Interaction, card: str):
             color=discord.Color.dark_grey()
         elif typist == dr:
             color=discord.Color.dark_gold()
+        else:
+            color=discord.Color.lighter_grey()
 
         # w=Create a Discord embed
 
@@ -403,11 +418,15 @@ async def cardian(interaction: discord.Interaction, card: str):
           embed.add_field(name="Type", value=f"{typist}", inline=True)
           embed.add_field(name="HP", value=f"{hp}", inline=True)
           embed.add_field(name="Stage", value=f"{stage}", inline=True)
-          embed.add_field(name="Attack", value=f"{attack}", inline=True)
+          embed.add_field(name="Attack", value=f"{attack}", inline=False)
           if attack_eff != "":
             embed.add_field(name="Attack Effect", value=f"{attack_eff}", inline=False)
-            
-          embed.add_field(name="Ability", value=f"{ability}", inline=False)
+          if atk2 != "":
+            embed.add_field(name="Second Attack", value=f"{atk2}", inline=False)
+            if atk2_eff != "":
+                embed.add_field(name= "Second Attack Effect", value=f"{atk2_eff}", inline=False)
+          if ability !="":
+            embed.add_field(name="Ability", value=f"{ability}", inline=False)
           embed.add_field(name="Weakness", value=f"{weak}", inline=True)
           embed.add_field(name="Retreat", value=f"{retreat}", inline=True)
 
