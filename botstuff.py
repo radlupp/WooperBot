@@ -14,7 +14,7 @@ from discord import Interaction
 from discord import interactions
 from oauth2client.service_account import ServiceAccountCredentials
 
-"""WooperBot Version 1.10.2"""
+"""WooperBot Version 1.11"""
 
 
 # Enable necessary intents
@@ -50,54 +50,100 @@ sheet = client.open_by_url(SHEET_URL).get_worksheet(3)  # 0 is workbook index
 
 
 
-def get_card_stats(input):
+def get_card_stats(input,set):
     """Fetches user stats from Google Sheets by looking up the Discord ID in Column C."""
     sheet = client.open_by_url(SHEET_URL).get_worksheet(3)  
-    print(input)
     try:
         data = sheet.get_all_values()  # Get all sheet values
-        for row in data:  # Loop through each row
-            if str.lower(row[2]) == str.lower(input):  # Column B, str.lower to account for case issues
-                if (row[3]) == 'Supporter' or (row[3]) == 'Item' or (row[3]) == 'Tool':   #Different Variables if Trainer Card
-                  category = (row[3])  
-                  effect = (row[4])         #Column 5 stores the effect etc etc
-                  art = (row[13])
-                  test = True               #test is true if trainer, false if pokemon
-                  typist = 0                #i have to return these for the pokemon so they are just 0 now
-                  hp = 0  
-                  stage = 0  
-                  attack = 0  
-                  attack_eff = 0
-                  atk2 = 0
-                  atk2_eff=0
-                  weak = 0  
-                  retreat = 0
-                  ability = 0
-                  if (row[3]) == 'Supporter':
-                    newcolor= discord.Color.orange()
-                  elif (row[2]) == 'Tool':
-                    newcolor= discord.Color.purple()
-                  else:
-                    newcolor = discord.Color.blue()
+        
+        if set != "":
+            for row in data:  # Loop through each row
+                if row[1] == set:
+                    if str.lower(row[2]) == str.lower(input):  # Column B, str.lower to account for case issues
+                        if (row[3]) == 'Supporter' or (row[3]) == 'Item' or (row[3]) == 'Tool':   #Different Variables if Trainer Card
+                            category = (row[3])  
+                            effect = (row[4])         #Column 5 stores the effect etc etc
+                            art = (row[13])
+                            test = True               #test is true if trainer, false if pokemon
+                            typist = 0                #i have to return these for the pokemon so they are just 0 now
+                            hp = 0  
+                            stage = 0  
+                            attack = 0  
+                            attack_eff = 0
+                            atk2 = 0
+                            atk2_eff=0
+                            weak = 0  
+                            retreat = 0
+                            ability = 0
+                            if (row[3]) == 'Supporter':
+                                newcolor= discord.Color.orange()
+                            elif (row[2]) == 'Tool':
+                                newcolor= discord.Color.purple()
+                            else:
+                                newcolor = discord.Color.blue()
                   
-                  return typist, hp, stage, attack, attack_eff, weak, retreat, ability, art, category, effect, test, atk2, atk2_eff, newcolor
-                else:                          #pokemon else
-                    typist = str(row[3])       # i think this is self explanetory
-                    hp = str(row[4])  
-                    stage = row[5]  
-                    attack = row[6]  
-                    attack_eff = row[7] 
-                    atk2 = row[8] 
-                    atk2_eff = row[9]
-                    weak = row[10]  
-                    retreat = row[11]
-                    ability = row[12]
-                    art = row[13]
-                    category = 0                #have to return these for trainer
-                    effect = 0
-                    newcolor=0
-                    test = False                #test is true if trainer, false if pokemon
-                    return typist, hp, stage, attack, attack_eff, weak, retreat, ability, art, category, effect, test, atk2, atk2_eff, newcolor
+                            return typist, hp, stage, attack, attack_eff, weak, retreat, ability, art, category, effect, test, atk2, atk2_eff, newcolor
+                        else:                          #pokemon else
+                            typist = str(row[3])       # i think this is self explanetory
+                            hp = str(row[4])  
+                            stage = row[5]  
+                            attack = row[6]  
+                            attack_eff = row[7] 
+                            atk2 = row[8] 
+                            atk2_eff = row[9]
+                            weak = row[10]  
+                            retreat = row[11]
+                            ability = row[12]
+                            art = row[13]
+                            category = 0                #have to return these for trainer
+                            effect = 0
+                            newcolor=0
+                            test = False                #test is true if trainer, false if pokemon
+                            return typist, hp, stage, attack, attack_eff, weak, retreat, ability, art, category, effect, test, atk2, atk2_eff, newcolor
+            
+        else:
+            for row in data:  # Loop through each row
+                if str.lower(row[2]) == str.lower(input):  # Column B, str.lower to account for case issues
+                    if (row[3]) == 'Supporter' or (row[3]) == 'Item' or (row[3]) == 'Tool':   #Different Variables if Trainer Card
+                        category = (row[3])  
+                        effect = (row[4])         #Column 5 stores the effect etc etc
+                        art = (row[13])
+                        test = True               #test is true if trainer, false if pokemon
+                        typist = 0                #i have to return these for the pokemon so they are just 0 now
+                        hp = 0  
+                        stage = 0  
+                        attack = 0  
+                        attack_eff = 0
+                        atk2 = 0
+                        atk2_eff=0
+                        weak = 0  
+                        retreat = 0
+                        ability = 0
+                        if (row[3]) == 'Supporter':
+                            newcolor= discord.Color.orange()
+                        elif (row[2]) == 'Tool':
+                            newcolor= discord.Color.purple()
+                        else:
+                            newcolor = discord.Color.blue()
+                  
+                        return typist, hp, stage, attack, attack_eff, weak, retreat, ability, art, category, effect, test, atk2, atk2_eff, newcolor
+                    else:                          #pokemon else
+                        typist = str(row[3])       # i think this is self explanetory
+                        hp = str(row[4])  
+                        stage = row[5]  
+                        attack = row[6]  
+                        attack_eff = row[7] 
+                        atk2 = row[8] 
+                        atk2_eff = row[9]
+                        weak = row[10]  
+                        retreat = row[11]
+                        ability = row[12]
+                        art = row[13]
+                        category = 0                #have to return these for trainer
+                        effect = 0
+                        newcolor=0
+                        test = False                #test is true if trainer, false if pokemon
+                        return typist, hp, stage, attack, attack_eff, weak, retreat, ability, art, category, effect, test, atk2, atk2_eff, newcolor
         return None  # Return None if the card isnt found
     except Exception as e:      #something blew up if this happens
         print(f"❌ Error accessing Google Sheets: {e}")
@@ -108,7 +154,6 @@ def get_arts(input):
     sheet = client.open_by_url(SHEET_URL).get_worksheet(3)  
     try:
         data = sheet.get_all_values()  # Get all sheet values
-        print(len(data))
         for row in data:  # Loop through each row
             if str.lower(row[2]) == str.lower(input):   #str.lower to account for case issues
                 art1=row[13]
@@ -164,7 +209,6 @@ def randomcard():
     try:
         data = sheet.get_all_values()
         x=len(data)
-        print(x)
         i = random.randint(0,x)
         j = "A" + str(i)
         final = sheet.cell(i,1).value
@@ -189,7 +233,7 @@ async def on_ready():
            # await channel.send("Yooo im online!")
 
 
-@bot.command(name="syync")
+@bot.command(name="sync")
 @commands.is_owner()
 async def syncing(ctx):
     """syncs all my slash commands with diiscord's, only i can use it"""
@@ -311,7 +355,6 @@ async def stats(ctx, *lmao):
         else:
             color=discord.Color.lighter_grey()
         # Create a Discord embed
-        print(test)
 
         if test:
           """Trainers have a different embed than pokemon"""
@@ -363,12 +406,18 @@ async def stats(ctx, *lmao):
         await ctx.send(f"I couldnt find that card, <:sadwoop:1339496999258558464> maybe check your spelling")
 
 
-
+        
 @bot.tree.command(name="card",description="Info about a PTCGP card!")
 @app_commands.autocomplete(card=card_autocomplete)
-async def cardian(interaction: discord.Interaction, card: str):
+@app_commands.choices(set=[app_commands.Choice(name="Space-Time Smackdown",value="A2"),
+        app_commands.Choice(name="Mythical Island",value="A1a"),
+        app_commands.Choice(name="Genetic Apex",value="A1"),
+        app_commands.Choice(name="Promo A",value="P-A"),
+        app_commands.Choice(name="Triumphant Light",value="A2a")
+        ])
+async def cardian(interaction: discord.Interaction, card: str, set: str=""):
     """?card but now its a slash command"""
-    card_stats = get_card_stats(card)
+    card_stats = get_card_stats(card,set)
     card=str.title(card)
     if card_stats:
         typist, hp, stage, attack, attack_eff, weak, retreat, ability, art, category, effect, test, atk2, atk2_eff, newcolor = card_stats
@@ -442,7 +491,7 @@ async def cardian(interaction: discord.Interaction, card: str):
           await interaction.response.send_message(embed=embed)
 
     else:
-        await interaction.response.send_message(f"I couldnt find that card, <:sadwoop:1339496999258558464> maybe check your spelling")
+        await interaction.response.send_message(f"I couldnt find that card, <:sadwoop:1339496999258558464> maybe it isnt in that set?")
 
 
 
@@ -462,7 +511,6 @@ async def stats(ctx, *lmao):
         x=0
         await ctx.send(f"**Viewing {l} card arts for {card}:**")
       
-        #print(f"hi {art1}")
         react = await ctx.send(art1)
 
         msg = react.id    #add reactions so the user can click on em
