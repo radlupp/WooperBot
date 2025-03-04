@@ -14,7 +14,7 @@ from discord import Interaction
 from discord import interactions
 from oauth2client.service_account import ServiceAccountCredentials
 
-"""WooperBot Version 1.11"""
+"""WooperBot Version 1.12"""
 
 
 # Enable necessary intents
@@ -148,6 +148,97 @@ def get_card_stats(input,set):
     except Exception as e:      #something blew up if this happens
         print(f"❌ Error accessing Google Sheets: {e}")
         return None
+
+def filter_for(type,stage,hp_min,hp_max,atk_dmg_min,atk_dmg_max,retreat_cost,ability,ex):
+    sheet = client.open_by_url(SHEET_URL).get_worksheet(3)
+    try:
+        data = sheet.get_all_values()  # Get all sheet values
+        a = []
+        t = False
+        s = False
+        r = False
+        hp = False
+        atk = False
+        ab = False
+        e = False
+        '''pokemon gets added to the list iff all the variables are true'''
+        for row in data:  # Loop through each row
+            x = row[4]
+            if(x==""):
+                break
+            if x != "HP":
+                x = int(x.replace(" HP","")) #HP to integer from sheet
+            else:
+                x =-1000
+            #print(x)
+            y = row[6]
+            y= y.replace("+","")
+            y= y.replace("x","")
+            if(y == ""):
+                break
+            if (y == "Attack" or not y.endswith("0") or y == ""):
+                y=0
+            else:
+                y= y.split(" ")
+                y= int(y[len(y)-1]) #Attack Damage to integer
+            z = row[8]
+            z= z.replace("+","")
+            z= z.replace("x","")
+            if (z== "Attack2" or not z.endswith("0") or z == ""):
+                z=0
+            else:
+                z= z.split(" ")
+                z= int(z[len(z)-1]) #Attack2 Damage to integer
+            if(type == "" or type == row[3]):
+                t = True
+            if(stage == "" or stage in row[5]):
+                s = True
+            if(retreat_cost ==-1 or retreat_cost == row[11]):
+                r = True
+            if(x >= hp_min and x <= hp_max):
+                hp = True
+            if((y >= atk_dmg_min and y <= atk_dmg_max) or (z >= atk_dmg_min and z <= atk_dmg_max)):
+                atk = True
+            if ability == None:
+                ab = True
+            elif ability:    
+                if(row[12] != ""):
+                    ab = True
+            else: 
+                if(row[12] == ""):
+                    ab = True
+            if ex == None:
+                e = True
+            elif ex:    
+                if(" ex" in row[2]):
+                    e = True
+            else:
+                if(" ex" not in row[2]):
+                    e = False
+            if(t and s and r and hp and atk and ab and e):
+                dupe = True
+                for i in a:
+                    if row[2] == i:
+                        dupe = False
+                        break
+                if dupe:
+                    a.append(row[2])
+            t = False
+            s = False
+            r = False
+            hp = False
+            atk = False
+            ab = False
+            e = False
+
+        if(len(a) == 0):
+            return None
+        return a
+            
+    except Exception as e:
+        print(f"❌ Error accessing Google Sheets: {e}")
+        return None
+
 
 def get_arts(input):
     """This gets the arts of a card"""
@@ -494,6 +585,65 @@ async def cardian(interaction: discord.Interaction, card: str, set: str=""):
         await interaction.response.send_message(f"I couldnt find that card, <:sadwoop:1339496999258558464> maybe it isnt in that set?")
 
 
+@bot.tree.command(name="filter",description="Filter Pokemon Cards by HP, Type, Damage, Retreat cost, etc")
+@app_commands.choices(type=[app_commands.Choice(name="Colorless",value="<:colorless:1334620662240776212>"),
+                            app_commands.Choice(name="Fighting",value="<:fighting:1334618556985376809>"),
+                            app_commands.Choice(name="Fire",value="<:fire:1334618516904476702>"),
+                            app_commands.Choice(name="Water",value="<:water:1334618527209885747>"),
+                            app_commands.Choice(name="Psychic",value="<:psychic:1334618547262849045>"),
+                            app_commands.Choice(name="Lightning",value="<:lightning:1334618537183936563>"),
+                            app_commands.Choice(name="Darkness",value="<:darkness:1334618567370604635>"),
+                            app_commands.Choice(name="Metal",value="<:metal:1334618578175131708>"),
+                            app_commands.Choice(name="Grass",value="<:grass:1334617925461741799>"),
+                            app_commands.Choice(name="Dragon",value="<:dragon:1334620515108655104>")])
+@app_commands.choices(stage=[app_commands.Choice(name="Basic",value="Basic"),
+                            app_commands.Choice(name="Stage 1",value="Stage 1"),
+                            app_commands.Choice(name="Stage 2",value="Stage 2")])
+async def filter(interaction: discord.Interaction, type: str ="", stage: str="",hp_min: int=0, hp_max: int=500, atk_dmg_min: int=0, atk_dmg_max: int=500, retreat_cost: int=-1, ability: bool=None,ex: bool=None):
+    print(hp_min)
+    print(ability)
+    print(atk_dmg_max)
+    print(type)
+    atk_dmg_max=int(atk_dmg_max)
+    results=filter_for(type,stage,hp_min,hp_max,atk_dmg_min,atk_dmg_max,retreat_cost,ability,ex)
+    txt =""
+    if type != "":
+        txt += "**Type: **" + type +", "
+    if stage != "":
+        txt += "**Stage: **" + stage.replace("Stage ","")+", "
+    if hp_min > 0:
+        txt += "**Min HP: **" + str(hp_min) + ", "
+    if hp_max < 500:
+        txt += "**Max HP: **" + str(hp_max) + ", "
+    if atk_dmg_min > 0:
+        txt += "**Min Atk Damage: **" + str(atk_dmg_min) + ", "
+    if int(atk_dmg_max) < 500:
+        txt += "**Max Atk Damage: **" + str(atk_dmg_max) + ", "
+    if retreat_cost != -1:
+        txt += "**Retreat: **" + str(retreat_cost) + ", "
+    if ability != None:
+        txt += "**Ability: " + str(ability) + ", "
+    if ex != None:
+        txt += "**Is Ex: **" + str(ex) + ", "
+
+
+
+    if results:
+        pokemons = results
+        embed = discord.Embed(
+            title=f"Filter Results for; {txt} ",
+            color=discord.Color.teal()
+          )
+        embed.set_author(name="WooperBot",url="https://x.com/radlup",icon_url=bot.user.avatar.url)
+          # Add fields
+        embed.add_field(name="Pokemon", value=f"{pokemons}", inline=True)
+        await interaction.response.send_message(embed=embed)
+
+    else:
+        await interaction.response.send_message(f"<:sadwoop:1339496999258558464> No cards matched that search.")
+
+
+
 
 
 @bot.command(name="arts")
@@ -663,6 +813,7 @@ async def stats(ctx, *lmao):
     embed.add_field(name="?commands", value=f"You're lookin at it", inline=False)
     embed.add_field(name="?card <Card Name>", value=f"Info about a PTCGP Card!", inline=False)
     embed.add_field(name="?arts <Card Name>", value=f"All arts for a given card, including those with multiple variants", inline=False)
+    embed.add_field(name="?filter", value=f"Search through all pokemon with a handful of different filters!", inline=False)
     embed.add_field(name="?misty", value=f"Practice flipping your Mistys before battle!", inline=False)
     embed.add_field(name="?randcard/?random", value=f"Get a random Card!", inline=False)
     embed.add_field(name="?help", value=f"Link to the support server", inline=False)
@@ -683,6 +834,7 @@ async def hello(interaction: discord.Interaction):
     embed.add_field(name="?commands", value=f"You're lookin at it", inline=False)
     embed.add_field(name="?card <Card Name>", value=f"Info about a PTCGP Card!", inline=False)
     embed.add_field(name="?arts <Card Name>", value=f"All arts for a given card, including those with multiple variants", inline=False)
+    embed.add_field(name="?filter", value=f"Search through all pokemon with a handful of different filters!", inline=False)
     embed.add_field(name="?misty", value=f"Practice flipping your Mistys before battle!", inline=False)
     embed.add_field(name="?randcard/?random", value=f"Get a random Card!", inline=False)
     embed.add_field(name="?help", value=f"Link to the support server", inline=False)
