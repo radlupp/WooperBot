@@ -504,7 +504,9 @@ async def stats(ctx, *lmao):
         app_commands.Choice(name="Mythical Island",value="A1a"),
         app_commands.Choice(name="Genetic Apex",value="A1"),
         app_commands.Choice(name="Promo A",value="P-A"),
-        app_commands.Choice(name="Triumphant Light",value="A2a")
+        app_commands.Choice(name="Triumphant Light",value="A2a"),
+        app_commands.Choice(name="Shining Revelry",value="A2b"),
+        app_commands.Choice(name="Celestial Guardians",value="A3")
         ])
 async def cardian(interaction: discord.Interaction, card: str, set: str=""):
     """?card but now its a slash command"""
